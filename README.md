@@ -1,2 +1,1 @@
-# NodeJS-Pure
-Pure NodeJS application runtime
+# Pure NodeJS application runtime
