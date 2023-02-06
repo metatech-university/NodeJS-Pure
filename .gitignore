@@ -1,0 +1,8 @@
+node_modules
+/log/
+/application/tasks
+*.log
+*.done
+*.pem
+.DS_Store
+data/
