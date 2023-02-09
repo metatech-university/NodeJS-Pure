@@ -3,11 +3,12 @@
 const fsp = require('node:fs').promises;
 const path = require('node:path');
 
-const staticServer = require('./lib/static.js');
 const logger = require('./lib/logger.js');
 const common = require('./lib/common.js');
-const { load, loadDir } = require('./lib/load.js');
-const ws = require('./lib/ws.js');
+
+const staticServer = require('./src/static.js');
+const { load, loadDir } = require('./src/load.js');
+const ws = require('./src/ws.js');
 
 const appPath = path.join(process.cwd(), '../NodeJS-Application');
 const apiPath = path.join(appPath, './api');
