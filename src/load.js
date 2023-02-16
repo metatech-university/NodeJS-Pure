@@ -19,13 +19,15 @@ const load = async (filePath, sandbox) => {
 };
 
 const loadDir = async (dir, sandbox) => {
-  const files = await fsp.readdir(dir);
+  const files = await fsp.readdir(dir, { withFileTypes: true });
   const container = {};
-  for (const fileName of files) {
-    if (!fileName.endsWith('.js')) continue;
-    const filePath = path.join(dir, fileName);
-    const name = path.basename(fileName, '.js');
-    container[name] = await load(filePath, sandbox);
+  for (const file of files) {
+    const { name } = file;
+    if (file.isFile() && !name.endsWith('.js')) continue;
+    const location = path.join(dir, name);
+    const key = path.basename(name, '.js');
+    const loader = file.isFile() ? load : loadDir;
+    container[key] = await loader(location, sandbox);
   }
   return container;
 };
