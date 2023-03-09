@@ -11,10 +11,9 @@
     "fmt": "prettier --write \"**/*.js\" \"**/*.ts\""
   },
   "engines": {
-    "node": "14 || 16 || 18"
+    "node": "16 || 18 || 19"
   },
   "dependencies": {
-    "metasql": "^2.1.2",
     "pg": "^8.8.0",
     "ws": "^8.12.0"
   },
