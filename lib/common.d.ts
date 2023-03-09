@@ -1,3 +1,4 @@
 declare namespace common {
-  function hash(password: string): Promise<string>;
+  function hashPassword(password: string): Promise<string>;
+  function validatePassword(password: string, serHash: string): Promise<boolean>;
 }
