@@ -15,7 +15,7 @@ const load = async (filePath, sandbox) => {
   const script = new vm.Script(code, { ...OPTIONS, lineOffset: -2 });
   const context = vm.createContext(Object.freeze({ ...sandbox }));
   const exported = script.runInContext(context, OPTIONS);
-  return typeof exp === 'object' ? exp : { method: exp };
+  return typeof exp === 'object' ? exported : { method: exported };
 };
 
 const loadDir = async (dir, sandbox) => {
