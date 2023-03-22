@@ -1,9 +1,8 @@
 'use strict';
 
-const http = require('node:http');
 const crypto = require('node:crypto');
 const { EventEmitter } = require('node:events');
-const { jsonParse } = require('./lib/common.js');
+const { jsonParse } = require('../lib/common.js');
 
 class Session {
   constructor(token, data) {
@@ -24,12 +23,16 @@ class Context {
 }
 
 class Client extends EventEmitter {
-  constructor(req, res, routing) {
+  #console;
+  #transport;
+  #routing;
+
+  constructor(console, transport, routing) {
     super();
-    this.req = req;
-    this.res = res;
-    this.routing = routing;
-    this.ip = req.socket.remoteAddress;
+    this.#console = console;
+    this.#transport = transport;
+    this.#routing = routing;
+    this.ip = transport.ip;
     this.session = null;
     this.eventId = 0;
   }
@@ -129,20 +132,7 @@ class Client extends EventEmitter {
       return;
     }
     this.send({ callback: callId, result });
-    console.log(`${this.ip}\t${interfaceName}/${methodName}`);
-  }
-
-  error(code = 500, { callId, error = null, httpCode = null } = {}) {
-    const { req, ip } = this;
-    const { url, method } = req;
-    if (!httpCode) httpCode = (error && error.httpCode) || code;
-    const status = http.STATUS_CODES[httpCode];
-    const pass = httpCode < 500 || httpCode > 599;
-    const message = pass && error ? error.message : status || 'Unknown error';
-    const reason = `${httpCode}\t${code}\t${error ? error.stack : status}`;
-    console.error(`${ip}\t${method}\t${url}\t${reason}`);
-    const packet = { callback: callId, error: { message, code } };
-    this.send(packet, httpCode);
+    this.#console.log(`${this.ip}\t${interfaceName}/${methodName}`);
   }
 
   destroy() {
