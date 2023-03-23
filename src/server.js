@@ -46,6 +46,11 @@ class Transport {
     const packet = { callback: callId, error: { message, code } };
     this.send(packet, httpCode);
   }
+
+  send(obj, code = 200) {
+    const data = JSON.stringify(obj);
+    this.write(data, code, 'json');
+  }
 }
 
 class HttpTransport extends Transport {
@@ -60,15 +65,10 @@ class HttpTransport extends Transport {
     this.res.writeHead(httpCode, { ...HEADERS, 'Content-Type': mimeType });
     this.res.end(data);
   }
-
-  send(obj, httpCode = 200) {
-    const data = JSON.stringify(obj);
-    this.write(data, httpCode, 'json');
-  }
 }
 
 class WsTransport extends Transport {
-  constructor(console, connection, req) {
+  constructor(console, req, connection) {
     super(console, req);
     this.connection = connection;
   }
@@ -76,13 +76,9 @@ class WsTransport extends Transport {
   write(data) {
     this.connection.send(data);
   }
-
-  send(obj) {
-    this.write(JSON.stringify(obj));
-  }
 }
 
-const serveStatic = async (staticPath, req, res) => {
+const serveStatic = (staticPath) => async (req, res) => {
   const url = req.url === '/' ? '/index.html' : req.url;
   const filePath = path.join(staticPath, url);
   try {
@@ -99,11 +95,12 @@ const serveStatic = async (staticPath, req, res) => {
 
 const createServer = (appPath, routing, console) => {
   const staticPath = path.join(appPath, './static');
+  const staticHandler = serveStatic(staticPath);
   const server = http.createServer();
 
   server.on('request', (req, res) => {
     if (!req.url.startsWith('/api')) {
-      serveStatic(staticPath, req, res);
+      staticHandler(req, res);
       return;
     }
     const transport = new HttpTransport(console, req, res);
@@ -118,7 +115,7 @@ const createServer = (appPath, routing, console) => {
 
   const ws = new Server({ server });
   ws.on('connection', (connection, req) => {
-    const transport = new WsTransport(console, connection, req);
+    const transport = new WsTransport(console, req, connection);
     const client = new Client(console, transport, routing);
 
     connection.on('message', (data) => {
