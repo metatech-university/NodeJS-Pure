@@ -26,15 +26,16 @@ class Client extends EventEmitter {
   #console;
   #transport;
   #routing;
+  #eventId;
 
   constructor(console, transport, routing) {
     super();
     this.#console = console;
     this.#transport = transport;
     this.#routing = routing;
+    this.#eventId = 0;
     this.ip = transport.ip;
     this.session = null;
-    this.eventId = 0;
   }
 
   get token() {
@@ -47,7 +48,7 @@ class Client extends EventEmitter {
       super.emit(name, data);
       return;
     }
-    this.send({ event: --this.eventId, [name]: data });
+    this.send({ event: --this.#eventId, [name]: data });
   }
 
   initializeSession(token, data = {}) {
