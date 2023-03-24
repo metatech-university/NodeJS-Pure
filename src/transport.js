@@ -22,10 +22,8 @@ const HEADERS = {
 };
 
 class Transport {
-  #console;
-
   constructor(console, req) {
-    this.#console = console;
+    this.console = console;
     this.req = req;
     this.ip = req.socket.remoteAddress;
   }
@@ -37,7 +35,7 @@ class Transport {
     const pass = httpCode < 500 || httpCode > 599;
     const message = pass && error ? error.message : status || 'Unknown error';
     const reason = `${httpCode}\t${code}\t${error ? error.stack : status}`;
-    this.#console.error(`${this.ip}\t${method}\t${url}\t${reason}`);
+    this.console.error(`${this.ip}\t${method}\t${url}\t${reason}`);
     const packet = { callback: callId, error: { message, code } };
     this.send(packet, httpCode);
   }
