@@ -5,7 +5,7 @@ const path = require('node:path');
 const logger = require('./lib/logger.js');
 const common = require('./lib/common.js');
 
-const { loadDir } = require('./src/load.js');
+const { loadDir } = require('./src/loader.js');
 const { createServer } = require('./src/server.js');
 
 const appPath = path.join(process.cwd(), '../NodeJS-Application');
