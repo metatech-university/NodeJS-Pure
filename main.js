@@ -25,7 +25,7 @@ const configPath = path.join(appPath, './config');
   sandbox.db = Object.freeze(db);
 
   const routing = await loadDir(apiPath, sandbox);
-  const server = createServer(appPath, routing, config, logger);
+  const server = createServer(appPath, routing, logger);
   const [port] = config.server.ports;
   server.listen(port);
   console.log(`API on port ${server.address().port}`);
