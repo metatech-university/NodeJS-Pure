@@ -58,7 +58,7 @@ class Client extends EventEmitter {
   }
 
   initializeSession(token, data = {}) {
-    if (this.session) sessions.delete(this.session.token);
+    if (this.session) this.finalizeSession(token);
     this.session = new Session(token, data);
     sessions.set(token, this.session);
     return true;
@@ -73,6 +73,7 @@ class Client extends EventEmitter {
     return true;
   }
 
+  // @deprecated
   startSession(token, data = {}) {
     this.initializeSession(token, data);
     return true;
@@ -144,7 +145,7 @@ class Client extends EventEmitter {
   destroy() {
     this.emit('close');
     if (!this.session) return;
-    sessions.delete(this.session.token);
+    this.finalizeSession(this.session.token);
   }
 }
 
