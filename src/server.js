@@ -54,7 +54,7 @@ class Client extends EventEmitter {
       super.emit(name, data);
       return;
     }
-    this.send({ event: --this.#eventId, [name]: data });
+    this.#transport.send({ event: --this.#eventId, [name]: data });
   }
 
   initializeSession(token, data = {}) {
@@ -94,7 +94,7 @@ class Client extends EventEmitter {
     }
     const [callType] = Object.keys(packet);
     if (callType === 'call') {
-      this.resumeCookieSession();
+      //this.resumeCookieSession();
       const [callType, target] = Object.keys(packet);
       const callId = parseInt(packet[callType], 10);
       const args = packet[target];
@@ -112,8 +112,7 @@ class Client extends EventEmitter {
   }
 
   async rpc(callId, interfaceName, methodName, args) {
-    const [iname, ver = '*'] = interfaceName.split('.');
-    const proc = this.routing.getMethod(iname, ver, methodName);
+    const proc = this.#routing[interfaceName][methodName];
     if (!proc) {
       this.#transport.error(404, { callId });
       return;
@@ -125,7 +124,7 @@ class Client extends EventEmitter {
     }
     let result = null;
     try {
-      result = await proc.invoke(context, args);
+      result = await proc.method(context, args);
     } catch (error) {
       if (error.message === 'Timeout reached') {
         error.code = error.httpCode = 408;
@@ -138,7 +137,7 @@ class Client extends EventEmitter {
       this.#transport.error(code, { callId, error: result, httpCode });
       return;
     }
-    this.send({ callback: callId, result });
+    this.#transport.send({ callback: callId, result });
     this.#console.log(`${this.ip}\t${interfaceName}/${methodName}`);
   }
 
