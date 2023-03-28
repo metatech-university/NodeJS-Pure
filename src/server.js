@@ -168,14 +168,14 @@ const createServer = (appPath, routing, console) => {
   const staticHandler = serveStatic(staticPath);
   const server = http.createServer();
 
-  server.on('request', (req, res) => {
+  server.on('request', async (req, res) => {
     if (!req.url.startsWith('/api')) {
       staticHandler(req, res);
       return;
     }
     const transport = new HttpTransport(console, req, res);
     const client = new Client(console, transport, routing);
-    const data = receiveBody(req);
+    const data = await receiveBody(req);
     client.message(data);
 
     req.on('close', () => {
