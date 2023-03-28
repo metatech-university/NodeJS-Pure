@@ -89,7 +89,7 @@ class Client extends EventEmitter {
     const packet = jsonParse(data);
     if (!packet) {
       const error = new Error('JSON parsing error');
-      this.error(500, { error, pass: true });
+      this.#transport.error(500, { error, pass: true });
       return;
     }
     const [callType] = Object.keys(packet);
@@ -104,23 +104,23 @@ class Client extends EventEmitter {
         return;
       }
       const error = new Error('Packet structure error');
-      this.error(400, { callId, error, pass: true });
+      this.#transport.error(400, { callId, error, pass: true });
       return;
     }
     const error = new Error('Packet structure error');
-    this.error(500, { error, pass: true });
+    this.#transport.error(500, { error, pass: true });
   }
 
   async rpc(callId, interfaceName, methodName, args) {
     const [iname, ver = '*'] = interfaceName.split('.');
     const proc = this.routing.getMethod(iname, ver, methodName);
     if (!proc) {
-      this.error(404, { callId });
+      this.#transport.error(404, { callId });
       return;
     }
     const context = new Context(this);
     if (!this.session && proc.access !== 'public') {
-      this.error(403, { callId });
+      this.#transport.error(403, { callId });
       return;
     }
     let result = null;
@@ -130,12 +130,12 @@ class Client extends EventEmitter {
       if (error.message === 'Timeout reached') {
         error.code = error.httpCode = 408;
       }
-      this.error(error.code, { callId, error });
+      this.#transport.error(error.code, { callId, error });
       return;
     }
     if (result?.constructor?.name === 'Error') {
-      const { code, httpCode } = result;
-      this.error(code, { callId, error: result, httpCode: httpCode || 200 });
+      const { code, httpCode = 200 } = result;
+      this.#transport.error(code, { callId, error: result, httpCode });
       return;
     }
     this.send({ callback: callId, result });
