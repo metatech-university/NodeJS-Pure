@@ -73,11 +73,6 @@ class Client extends EventEmitter {
     return true;
   }
 
-  startSession(token, data = {}) {
-    this.initializeSession(token, data);
-    return true;
-  }
-
   restoreSession(token) {
     const session = sessions.get(token);
     if (!session) return false;
