@@ -145,7 +145,7 @@ class Client extends EventEmitter {
   destroy() {
     this.emit('close');
     if (!this.session) return;
-    this.finalizeSession(this.session.token);
+    this.finalizeSession();
   }
 }
 
