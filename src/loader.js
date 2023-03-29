@@ -9,16 +9,16 @@ const OPTIONS = {
   displayErrors: false,
 };
 
-const load = async (filePath, sandbox) => {
+const load = async (filePath, sandbox, contextualize = false) => {
   const src = await fsp.readFile(filePath, 'utf8');
-  const code = `'use strict';\n{\n${src}\n}`;
+  const opening = contextualize ? '(context) => ' : '';
+  const code = `'use strict';\n${opening}{\n${src}\n}`;
   const script = new vm.Script(code, { ...OPTIONS, lineOffset: -2 });
   const context = vm.createContext(Object.freeze({ ...sandbox }));
-  const exp = script.runInContext(context, OPTIONS);
-  return typeof exp === 'object' ? exp : { method: exp };
+  return script.runInContext(context, OPTIONS);
 };
 
-const loadDir = async (dir, sandbox) => {
+const loadDir = async (dir, sandbox, contextualize = false) => {
   const files = await fsp.readdir(dir, { withFileTypes: true });
   const container = {};
   for (const file of files) {
@@ -27,7 +27,7 @@ const loadDir = async (dir, sandbox) => {
     const location = path.join(dir, name);
     const key = path.basename(name, '.js');
     const loader = file.isFile() ? load : loadDir;
-    container[key] = await loader(location, sandbox);
+    container[key] = await loader(location, sandbox, contextualize);
   }
   return container;
 };

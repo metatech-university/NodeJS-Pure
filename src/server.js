@@ -73,12 +73,6 @@ class Client extends EventEmitter {
     return true;
   }
 
-  // @deprecated
-  startSession(token, data = {}) {
-    this.initializeSession(token, data);
-    return true;
-  }
-
   restoreSession(token) {
     const session = sessions.get(token);
     if (!session) return false;
@@ -125,7 +119,8 @@ class Client extends EventEmitter {
     }
     let result = null;
     try {
-      result = await proc.method(context, args);
+      console.log(proc);
+      result = await proc(context).method(args);
     } catch (error) {
       if (error.message === 'Timeout reached') {
         error.code = error.httpCode = 408;

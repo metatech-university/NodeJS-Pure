@@ -24,7 +24,7 @@ const configPath = path.join(appPath, './config');
   sandbox.api = Object.freeze({});
   sandbox.db = Object.freeze(db);
 
-  const routing = await loadDir(apiPath, sandbox);
+  const routing = await loadDir(apiPath, sandbox, true);
   const server = createServer(appPath, routing, logger);
   const [port] = config.server.ports;
   server.listen(port);
