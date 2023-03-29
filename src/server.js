@@ -58,7 +58,7 @@ class Client extends EventEmitter {
   }
 
   initializeSession(token, data = {}) {
-    if (this.session) this.finalizeSession(token);
+    this.finalizeSession();
     this.session = new Session(token, data);
     sessions.set(token, this.session);
     return true;
