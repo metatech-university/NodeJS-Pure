@@ -28,7 +28,7 @@ class Transport {
     this.ip = req.socket.remoteAddress;
   }
 
-  error(code = 500, { callId, error = null, httpCode = null } = {}) {
+  error(code = 500, { id, error = null, httpCode = null } = {}) {
     const { url, method } = this.req;
     if (!httpCode) httpCode = error?.httpCode || code;
     const status = http.STATUS_CODES[httpCode];
@@ -36,7 +36,7 @@ class Transport {
     const message = pass ? error?.message : status || 'Unknown error';
     const reason = `${httpCode}\t${code}\t${error ? error.stack : status}`;
     this.console.error(`${this.ip}\t${method}\t${url}\t${reason}`);
-    const packet = { callback: callId, error: { message, code } };
+    const packet = { type: 'callback', id, error: { message, code } };
     this.send(packet, httpCode);
   }
 
