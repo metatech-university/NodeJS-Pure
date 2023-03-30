@@ -64,9 +64,7 @@ class Client extends EventEmitter {
     return true;
   }
 
-  finalizeSession(token) {
-    const session = sessions.get(token);
-    if (!session) return false;
+  finalizeSession() {
     if (!this.session) return false;
     sessions.delete(this.session.token);
     this.session = null;
