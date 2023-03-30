@@ -32,14 +32,12 @@ class Client extends EventEmitter {
   #console;
   #transport;
   #routing;
-  #eventId;
 
   constructor(console, transport, routing) {
     super();
     this.#console = console;
     this.#transport = transport;
     this.#routing = routing;
-    this.#eventId = 0;
     this.ip = transport.ip;
     this.session = null;
   }
@@ -54,7 +52,7 @@ class Client extends EventEmitter {
       super.emit(name, data);
       return;
     }
-    this.#transport.send({ event: --this.#eventId, [name]: data });
+    this.#transport.send({ type: 'event', name, data });
   }
 
   initializeSession(token, data = {}) {
@@ -85,34 +83,30 @@ class Client extends EventEmitter {
       this.#transport.error(500, { error, pass: true });
       return;
     }
-    const [callType] = Object.keys(packet);
-    if (callType === 'call') {
+    const { type, id, interface: name, method, args } = packet;
+    if (type === 'call') {
       //this.resumeCookieSession();
-      const [callType, target] = Object.keys(packet);
-      const callId = parseInt(packet[callType], 10);
-      const args = packet[target];
-      if (callId && args) {
-        const [interfaceName, methodName] = target.split('/');
-        void this.rpc(callId, interfaceName, methodName, args);
+      if (id && args) {
+        void this.rpc(id, name, method, args);
         return;
       }
       const error = new Error('Packet structure error');
-      this.#transport.error(400, { callId, error, pass: true });
+      this.#transport.error(400, { id, error, pass: true });
       return;
     }
     const error = new Error('Packet structure error');
     this.#transport.error(500, { error, pass: true });
   }
 
-  async rpc(callId, interfaceName, methodName, args) {
+  async rpc(id, interfaceName, methodName, args) {
     const proc = this.#routing[interfaceName][methodName];
     if (!proc) {
-      this.#transport.error(404, { callId });
+      this.#transport.error(404, { id });
       return;
     }
     const context = new Context(this);
     if (!this.session && proc.access !== 'public') {
-      this.#transport.error(403, { callId });
+      this.#transport.error(403, { id });
       return;
     }
     let result = null;
@@ -123,15 +117,15 @@ class Client extends EventEmitter {
       if (error.message === 'Timeout reached') {
         error.code = error.httpCode = 408;
       }
-      this.#transport.error(error.code, { callId, error });
+      this.#transport.error(error.code, { id, error });
       return;
     }
     if (result?.constructor?.name === 'Error') {
       const { code, httpCode = 200 } = result;
-      this.#transport.error(code, { callId, error: result, httpCode });
+      this.#transport.error(code, { id, error: result, httpCode });
       return;
     }
-    this.#transport.send({ callback: callId, result });
+    this.#transport.send({ type: 'callback', id, result });
     this.#console.log(`${this.ip}\t${interfaceName}/${methodName}`);
   }
 
