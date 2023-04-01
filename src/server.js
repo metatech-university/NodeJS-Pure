@@ -83,11 +83,11 @@ class Client extends EventEmitter {
       this.#transport.error(500, { error, pass: true });
       return;
     }
-    const { type, id, interface: name, method, args } = packet;
+    const { id, type, args } = packet;
     if (type === 'call') {
       //this.resumeCookieSession();
       if (id && args) {
-        void this.rpc(id, name, method, args);
+        this.rpc(packet);
         return;
       }
       const error = new Error('Packet structure error');
@@ -98,8 +98,10 @@ class Client extends EventEmitter {
     this.#transport.error(500, { error, pass: true });
   }
 
-  async rpc(id, interfaceName, methodName, args) {
-    const proc = this.#routing[interfaceName][methodName];
+  async rpc(packet) {
+    const { id } = packet;
+    const [unit, method] = packet.method;
+    const proc = this.#routing[unit][method];
     if (!proc) {
       this.#transport.error(404, { id });
       return;
@@ -112,7 +114,7 @@ class Client extends EventEmitter {
     let result = null;
     try {
       console.log(proc);
-      result = await proc(context).method(args);
+      result = await proc(context).method(packet.args);
     } catch (error) {
       if (error.message === 'Timeout reached') {
         error.code = error.httpCode = 408;
@@ -126,7 +128,7 @@ class Client extends EventEmitter {
       return;
     }
     this.#transport.send({ type: 'callback', id, result });
-    this.#console.log(`${this.ip}\t${interfaceName}/${methodName}`);
+    this.#console.log(`${this.ip}\t${unit}/${method}`);
   }
 
   destroy() {
