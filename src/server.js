@@ -31,13 +31,11 @@ class Context {
 class Client extends EventEmitter {
   #console;
   #transport;
-  #routing;
 
-  constructor(console, transport, routing) {
+  constructor(console, transport) {
     super();
     this.#console = console;
     this.#transport = transport;
-    this.#routing = routing;
     this.ip = transport.ip;
     this.session = null;
   }
@@ -45,6 +43,10 @@ class Client extends EventEmitter {
   get token() {
     if (this.session === null) return '';
     return this.session.token;
+  }
+
+  createContext() {
+    return new Context(this);
   }
 
   emit(name, data) {
@@ -76,7 +78,7 @@ class Client extends EventEmitter {
     return true;
   }
 
-  message(data) {
+  messageHandler(routing, data) {
     const packet = jsonParse(data);
     if (!packet) {
       const error = new Error('JSON parsing error');
@@ -85,9 +87,9 @@ class Client extends EventEmitter {
     }
     const { id, type, args } = packet;
     if (type === 'call') {
-      //this.resumeCookieSession();
+      //this.#transport.resumeCookieSession();
       if (id && args) {
-        this.rpc(packet);
+        this.rpc(routing, packet);
         return;
       }
       const error = new Error('Packet structure error');
@@ -98,22 +100,22 @@ class Client extends EventEmitter {
     this.#transport.error(500, { error, pass: true });
   }
 
-  async rpc(packet) {
+  async rpc(routing, packet) {
     const { id } = packet;
     const [unit, method] = packet.method;
-    const proc = this.#routing[unit][method];
+    const proc = routing[unit][method];
     if (!proc) {
       this.#transport.error(404, { id });
       return;
     }
-    const context = new Context(this);
+    const context = this.createContext();
     if (!this.session && proc.access !== 'public') {
       this.#transport.error(403, { id });
       return;
     }
     let result = null;
     try {
-      console.log(proc);
+      this.#console.log(proc);
       result = await proc(context).method(packet.args);
     } catch (error) {
       if (error.message === 'Timeout reached') {
@@ -164,9 +166,9 @@ const createServer = (appPath, routing, console) => {
       return;
     }
     const transport = new HttpTransport(console, req, res);
-    const client = new Client(console, transport, routing);
+    const client = new Client(console, transport);
     const data = await receiveBody(req);
-    client.message(data);
+    client.messageHandler(routing, data);
 
     req.on('close', () => {
       client.destroy();
@@ -176,10 +178,10 @@ const createServer = (appPath, routing, console) => {
   const ws = new Server({ server });
   ws.on('connection', (connection, req) => {
     const transport = new WsTransport(console, req, connection);
-    const client = new Client(console, transport, routing);
+    const client = new Client(console, transport);
 
     connection.on('message', (data) => {
-      client.message(data);
+      client.messageHandler(routing, data);
     });
 
     connection.on('close', () => {
