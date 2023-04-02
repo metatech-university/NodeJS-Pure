@@ -34,7 +34,7 @@ class Transport {
     const status = http.STATUS_CODES[httpCode];
     const pass = httpCode < 500 || httpCode > 599;
     const message = pass ? error?.message : status || 'Unknown error';
-    const reason = `${httpCode}\t${code}\t${error ? error.stack : status}`;
+    const reason = `${code}\t${error ? error.stack : status}`;
     this.console.error(`${this.ip}\t${method}\t${url}\t${reason}`);
     const packet = { type: 'callback', id, error: { message, code } };
     this.send(packet, httpCode);
