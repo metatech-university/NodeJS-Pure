@@ -87,7 +87,7 @@ class Client extends EventEmitter {
     }
     const { id, type, args } = packet;
     if (type === 'call') {
-      //this.#transport.resumeCookieSession();
+      /* TODO: this.#transport.resumeCookieSession(); */
       if (id && args) {
         this.rpc(routing, packet);
         return;
@@ -102,20 +102,20 @@ class Client extends EventEmitter {
 
   async rpc(routing, packet) {
     const { id } = packet;
-    const [unit, method] = packet.method;
+    const [unit, method] = packet.method.split('/');
     const proc = routing[unit][method];
     if (!proc) {
       this.#transport.error(404, { id });
       return;
     }
     const context = this.createContext();
+    /* TODO: check rights
     if (!this.session && proc.access !== 'public') {
       this.#transport.error(403, { id });
       return;
-    }
+    }*/
     let result = null;
     try {
-      this.#console.log(proc);
       result = await proc(context).method(packet.args);
     } catch (error) {
       if (error.message === 'Timeout reached') {
