@@ -6,7 +6,7 @@ const logger = require('./lib/logger.js');
 const common = require('./lib/common.js');
 
 const { loadDir } = require('./src/loader.js');
-const { createServer } = require('./src/server.js');
+const { Server } = require('./src/server.js');
 
 const appPath = path.join(process.cwd(), '../NodeJS-Application');
 const apiPath = path.join(appPath, './api');
@@ -25,8 +25,8 @@ const configPath = path.join(appPath, './config');
   sandbox.db = Object.freeze(db);
 
   const routing = await loadDir(apiPath, sandbox, true);
-  const server = createServer(appPath, routing, logger);
+  const server = new Server(appPath, routing, logger);
   const [port] = config.server.ports;
   server.listen(port);
-  console.log(`API on port ${server.address().port}`);
+  console.log(`API on port ${port}`);
 })();
