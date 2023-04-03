@@ -175,17 +175,19 @@ class Server {
       return;
     }*/
     this.console.log(`${client.ip}\t${packet.method}`);
-    proc(context).method(packet.args).then((result) => {
-      if (result?.constructor?.name === 'Error') {
-        const { code, httpCode = 200 } = result;
-        client.error(code, { id, error: result, httpCode });
-        return;
-      }
-      client.send({ type: 'callback', id, result });
-    }).catch((error) => {
-      client.error(error.code, { id, error });
-      return;
-    });
+    proc(context)
+      .method(packet.args)
+      .then((result) => {
+        if (result?.constructor?.name === 'Error') {
+          const { code, httpCode = 200 } = result;
+          client.error(code, { id, error: result, httpCode });
+          return;
+        }
+        client.send({ type: 'callback', id, result });
+      })
+      .catch((error) => {
+        client.error(error.code, { id, error });
+      });
   }
 }
 
