@@ -29,14 +29,10 @@ class Context {
 }
 
 class Client extends EventEmitter {
-  #server;
   #transport;
-  #console;
 
-  constructor(server, transport) {
+  constructor(transport) {
     super();
-    this.#server = server;
-    this.#console = server.console;
     this.#transport = transport;
     this.ip = transport.ip;
     this.session = null;
@@ -122,7 +118,7 @@ class Server {
         return;
       }
       const transport = new HttpTransport(console, req, res);
-      const client = new Client(console, transport);
+      const client = new Client(transport);
       const data = await receiveBody(req);
       this.rpc(client, data);
 
@@ -134,7 +130,7 @@ class Server {
     const wsServer = new ws.Server({ server: this.httpServer });
     wsServer.on('connection', (connection, req) => {
       const transport = new WsTransport(console, req, connection);
-      const client = new Client(console, transport);
+      const client = new Client(transport);
 
       connection.on('message', (data) => {
         this.rpc(client, data);
