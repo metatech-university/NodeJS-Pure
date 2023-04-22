@@ -8,26 +8,20 @@ const common = require('./lib/common.js');
 const { loadDir } = require('./src/loader.js');
 const { Server } = require('./src/server.js');
 
-const sandbox = { console, common, api: Object.freeze({}) };
-
-const application = {
-  path: path.join(process.cwd(), '../NodeJS-Application'),
-  sandbox,
-  console,
-  config: null,
-  routing: null,
-  server: null,
-};
+const appPath = path.join(process.cwd(), '../NodeJS-Application');
+const api = Object.freeze({});
+const sandbox = { console, common, api, db: null };
 
 (async () => {
-  const configPath = path.join(application.path, './config');
-  application.config = await loadDir(configPath, application.sandbox);
+  const configPath = path.join(appPath, './config');
+  const config = await loadDir(configPath, sandbox);
 
-  const db = require('./lib/db.js')(application.config.db);
-  application.sandbox.db = Object.freeze(db);
+  const db = require('./lib/db.js')(config.db);
+  sandbox.db = Object.freeze(db);
 
-  const apiPath = path.join(application.path, './api');
-  application.routing = await loadDir(apiPath, sandbox, true);
+  const apiPath = path.join(appPath, './api');
+  const routing = await loadDir(apiPath, sandbox, true);
 
+  const application = { path: appPath, sandbox, console, config, routing };
   application.server = new Server(application);
 })();
