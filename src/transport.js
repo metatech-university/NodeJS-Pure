@@ -22,20 +22,21 @@ const HEADERS = {
 };
 
 class Transport {
-  constructor(console, req) {
-    this.console = console;
+  constructor(server, req) {
+    this.server = server;
     this.req = req;
     this.ip = req.socket.remoteAddress;
   }
 
   error(code = 500, { id, error = null, httpCode = null } = {}) {
+    const { console } = this.server;
     const { url, method } = this.req;
     if (!httpCode) httpCode = error?.httpCode || code;
     const status = http.STATUS_CODES[httpCode];
     const pass = httpCode < 500 || httpCode > 599;
     const message = pass ? error?.message : status || 'Unknown error';
     const reason = `${code}\t${error ? error.stack : status}`;
-    this.console.error(`${this.ip}\t${method}\t${url}\t${reason}`);
+    console.error(`${this.ip}\t${method}\t${url}\t${reason}`);
     const packet = { type: 'callback', id, error: { message, code } };
     this.send(packet, httpCode);
   }
@@ -47,8 +48,8 @@ class Transport {
 }
 
 class HttpTransport extends Transport {
-  constructor(console, req, res) {
-    super(console, req);
+  constructor(server, req, res) {
+    super(server, req);
     this.res = res;
   }
 
@@ -61,8 +62,8 @@ class HttpTransport extends Transport {
 }
 
 class WsTransport extends Transport {
-  constructor(console, req, connection) {
-    super(console, req);
+  constructor(server, req, connection) {
+    super(server, req);
     this.connection = connection;
   }
 
