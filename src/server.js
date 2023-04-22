@@ -102,13 +102,17 @@ const serveStatic = (staticPath) => async (req, res) => {
 };
 
 class Server {
-  constructor(appPath, routing, console) {
-    this.appPath = appPath;
-    const staticPath = path.join(appPath, './static');
+  constructor(application) {
+    this.application = application;
+    const { console, routing, config } = application;
+    const staticPath = path.join(application.path, './static');
     this.staticHandler = serveStatic(staticPath);
     this.routing = routing;
     this.console = console;
     this.httpServer = http.createServer();
+    const [port] = config.server.ports;
+    this.listen(port);
+    console.log(`API on port ${port}`);
   }
 
   listen(port) {
@@ -117,7 +121,7 @@ class Server {
         this.staticHandler(req, res);
         return;
       }
-      const transport = new HttpTransport(console, req, res);
+      const transport = new HttpTransport(this, req, res);
       const client = new Client(transport);
       const data = await receiveBody(req);
       this.rpc(client, data);
@@ -129,7 +133,7 @@ class Server {
 
     const wsServer = new ws.Server({ server: this.httpServer });
     wsServer.on('connection', (connection, req) => {
-      const transport = new WsTransport(console, req, connection);
+      const transport = new WsTransport(this, req, connection);
       const client = new Client(transport);
 
       connection.on('message', (data) => {

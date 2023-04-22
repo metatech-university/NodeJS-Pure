@@ -2,31 +2,32 @@
 
 const path = require('node:path');
 
-const logger = require('./lib/logger.js');
+const console = require('./lib/logger.js');
 const common = require('./lib/common.js');
 
 const { loadDir } = require('./src/loader.js');
 const { Server } = require('./src/server.js');
 
-const appPath = path.join(process.cwd(), '../NodeJS-Application');
-const apiPath = path.join(appPath, './api');
-const configPath = path.join(appPath, './config');
+const sandbox = { console, common, api: Object.freeze({}) };
+
+const application = {
+  path: path.join(process.cwd(), '../NodeJS-Application'),
+  sandbox,
+  console,
+  config: null,
+  routing: null,
+  server: null,
+};
 
 (async () => {
-  const sandbox = {
-    console: Object.freeze(logger),
-    common: Object.freeze(common),
-  };
+  const configPath = path.join(application.path, './config');
+  application.config = await loadDir(configPath, application.sandbox);
 
-  const config = await loadDir(configPath, sandbox);
-  const db = require('./lib/db.js')(config.db);
+  const db = require('./lib/db.js')(application.config.db);
+  application.sandbox.db = Object.freeze(db);
 
-  sandbox.api = Object.freeze({});
-  sandbox.db = Object.freeze(db);
+  const apiPath = path.join(application.path, './api');
+  application.routing = await loadDir(apiPath, sandbox, true);
 
-  const routing = await loadDir(apiPath, sandbox, true);
-  const server = new Server(appPath, routing, logger);
-  const [port] = config.server.ports;
-  server.listen(port);
-  console.log(`API on port ${port}`);
+  application.server = new Server(application);
 })();
