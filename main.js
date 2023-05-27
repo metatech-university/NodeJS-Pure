@@ -1,5 +1,6 @@
 'use strict';
 
+const vm = require('node:vm');
 const fsp = require('node:fs').promises;
 const path = require('node:path');
 
@@ -9,7 +10,7 @@ const common = require('./lib/common.js');
 const { loadDir, createRouting } = require('./src/loader.js');
 const { Server } = require('./src/server.js');
 
-const sandbox = { console, common };
+const sandbox = vm.createContext({ console, common });
 
 (async () => {
   const applications = await fsp.readFile('.applications', 'utf8');
