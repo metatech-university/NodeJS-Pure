@@ -1,5 +1,6 @@
 'use strict';
 
+const vm = require('node:vm');
 const fsp = require('node:fs').promises;
 const path = require('node:path');
 
@@ -9,8 +10,7 @@ const common = require('./lib/common.js');
 const { loadDir, createRouting } = require('./src/loader.js');
 const { Server } = require('./src/server.js');
 
-const api = Object.freeze({});
-const sandbox = { console, common, api, db: null };
+const sandbox = vm.createContext({ console, common });
 
 (async () => {
   const applications = await fsp.readFile('.applications', 'utf8');
@@ -19,13 +19,19 @@ const sandbox = { console, common, api, db: null };
   const configPath = path.join(appPath, './config');
   const config = await loadDir(configPath, sandbox);
 
-  const db = require('./lib/db.js')(config.db);
-  sandbox.db = Object.freeze(db);
+  const libPath = path.join(appPath, './lib');
+  const lib = await loadDir(libPath, sandbox);
+
+  const domainPath = path.join(appPath, './domain');
+  const domain = await loadDir(domainPath, sandbox);
+
+  sandbox.db = require('./lib/db.js');
 
   const apiPath = path.join(appPath, './api');
   const api = await loadDir(apiPath, sandbox, true);
   const routing = createRouting(api);
 
-  const application = { path: appPath, sandbox, console, config, routing };
+  const application = { path: appPath, sandbox, console, routing, config };
+  Object.assign(sandbox, { api, lib, domain, config, application });
   application.server = new Server(application);
 })();
