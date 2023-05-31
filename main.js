@@ -7,7 +7,7 @@ const path = require('node:path');
 const console = require('./lib/logger.js');
 const common = require('./lib/common.js');
 
-const { loadDir, createRouting } = require('./src/loader.js');
+const { loadDir, createRouting, startHandlers } = require('./src/loader.js');
 const { Server } = require('./src/server.js');
 
 const sandbox = vm.createContext({ console, common });
@@ -31,7 +31,12 @@ const sandbox = vm.createContext({ console, common });
   const api = await loadDir(apiPath, sandbox, true);
   const routing = createRouting(api);
 
-  const application = { path: appPath, sandbox, console, routing, config };
+  const application = {
+    path: appPath, sandbox, console, routing, config, startHandlers
+  };
   Object.assign(sandbox, { api, lib, domain, config, application });
   application.server = new Server(application);
+  // starts functions execut on starts of application
+  application.startHandlers.map((fn) => common.execute(fn));
+  application.starts = [];
 })();
