@@ -4,6 +4,9 @@ const vm = require('node:vm');
 const fsp = require('node:fs').promises;
 const path = require('node:path');
 
+const metarhia  = {};
+metarhia.metautil = require('metautil');
+
 const console = require('./lib/logger.js');
 const common = require('./lib/common.js');
 
@@ -25,7 +28,8 @@ const sandbox = vm.createContext({ console, common });
   const domainPath = path.join(appPath, './domain');
   const domain = await loadDir(domainPath, sandbox);
 
-  sandbox.db = require('./lib/db.js');
+  sandbox.db = require('./lib/db.js')(config.database);
+  sandbox.metarhia = metarhia;
 
   const apiPath = path.join(appPath, './api');
   const api = await loadDir(apiPath, sandbox, true);

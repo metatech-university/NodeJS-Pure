@@ -176,7 +176,7 @@ class Server {
     }*/
     this.console.log(`${client.ip}\t${packet.method}`);
     proc(context)
-      .method(packet.args)
+      .method(...packet.args)
       .then((result) => {
         if (result?.constructor?.name === 'Error') {
           const { code, httpCode = 200 } = result;
