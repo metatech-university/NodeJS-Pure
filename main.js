@@ -4,7 +4,7 @@ const vm = require('node:vm');
 const fsp = require('node:fs').promises;
 const path = require('node:path');
 
-const metarhia  = {};
+const metarhia = {};
 metarhia.metautil = require('metautil');
 
 const console = require('./lib/logger.js');
