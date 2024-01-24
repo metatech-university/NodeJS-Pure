@@ -25,7 +25,7 @@ const sandbox = vm.createContext({ console, common });
   const domainPath = path.join(appPath, './domain');
   const domain = await loadDir(domainPath, sandbox);
 
-  sandbox.db = require('./lib/db.js');
+  sandbox.db = require('./lib/db.js')(config.database);
 
   const apiPath = path.join(appPath, './api');
   const api = await loadDir(apiPath, sandbox, true);
